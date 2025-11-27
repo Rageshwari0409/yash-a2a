@@ -1,0 +1,109 @@
+name: Build and Push Docker Image to AWS ECR
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches:
+      - dev
+    paths-ignore:
+      - "k8s/**"
+      - "helm/**"
+      - .github/workflows/cd.yaml
+      - .github/config.yaml
+
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on:
+      labels: [self-hosted, AWSRunner]
+      group: UnifiedEntAWSRunner
+
+    outputs:
+      image_tag: ${{ steps.set_tag.outputs.image_tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          echo "branch_name=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+
+      - name: Load config.yaml into environment
+        run: |
+          while IFS=":" read -r key value; do
+            key=$(echo "$key" | xargs)
+            value=$(echo "$value" | xargs)
+            if [[ -n "$key" && -n "$value" ]]; then
+              echo "$key=$value" >> $GITHUB_ENV
+            fi
+          done < .github/config.yaml
+
+      - name: Set timestamp tag
+        id: set_tag
+        run: |
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          echo "image_tag=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "IMAGE_TAG=$TIMESTAMP" >> $GITHUB_ENV
+
+      - name: Authenticate Docker to AWS ECR
+        run: |
+          ECR_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+          aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $ECR_URI
+
+      - name: Build Docker image
+        run: |
+          docker build -t $ECR_REPOSITORY:latest -t $ECR_REPOSITORY:$IMAGE_TAG .
+
+      - name: Tag Docker images for ECR
+        run: |
+          ECR_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}
+          docker tag $ECR_REPOSITORY:latest $ECR_URI:latest
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_URI:$IMAGE_TAG
+
+      - name: Check Trivy Vulnerability DB
+        run: ls ~/.cache/trivy/db
+        
+      - name: Run Trivy scan 
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v $HOME/.cache/trivy:/root/.cache/ \
+            docker.io/aquasec/trivy \
+            image --scanners vuln --severity HIGH,CRITICAL --format table \
+            ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:latest \
+            > trivy-scan.txt
+      
+      - name: Add Trivy results to GitHub summary
+        run: |
+          echo "## Trivy Vulnerability Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat trivy-scan.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          
+      - name: Push Docker images to ECR
+        run: |
+          ECR_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}
+          docker push $ECR_URI:latest
+          docker push $ECR_URI:$IMAGE_TAG
+
+      - name: Remove local Docker images
+        run: |
+          docker rmi $ECR_REPOSITORY:latest || true
+          docker rmi $ECR_REPOSITORY:$IMAGE_TAG || true
+          docker rmi ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:latest || true
+          docker rmi ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}:$IMAGE_TAG || true
+
+  trigger-cd:
+    needs: build-and-push
+    uses: ./.github/workflows/cd.yaml
+    with:
+      image_tag: ${{ needs.build-and-push.outputs.image_tag }}
+      

@@ -1,0 +1,41 @@
+version: 2
+updates:
+  # --- Python dependencies (pip) ---
+  - package-ecosystem: "pip"
+    directory: "/"              
+    schedule:
+      interval: "weekly"
+      day: "friday"                 
+      time: "06:15" # UTC
+    commit-message:
+      prefix: "deps(pip)"
+    open-pull-requests-limit: 5
+    target-branch: "dev"    
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"          
+        update-types:
+          - "minor"
+          - "patch"    
+          - "major"      
+
+  # --- GitHub Actions dependencies ---
+  - package-ecosystem: "github-actions"
+    directory: "/"                
+    schedule:
+      interval: "monthly"
+      day: "friday"                  
+      time: "06:15" # UTC
+    commit-message:
+      prefix: "deps(actions)"
+    open-pull-requests-limit: 5
+    target-branch: "dev" 
+    groups:
+      action-dependencies:
+        patterns:
+          - "*"          
+        update-types:
+          - "minor"
+          - "patch"  
+          - "major"

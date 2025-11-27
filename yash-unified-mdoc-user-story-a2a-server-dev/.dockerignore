@@ -1,0 +1,13 @@
+.env
+.venv
+agents/.env
+temp/*
+
+venv/
+venv_*/
+*.pyc
+ffmpeg-*
+.env
+.DS_Store
+.venv
+app.log

@@ -1,0 +1,72 @@
+name: CD - Deploy to Kubernetes
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag to deploy"
+        required: true
+        default: "latest"
+
+  workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on:
+      labels: [self-hosted, AWSRunner]
+      group: UnifiedEntAWSRunner
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Extract branch name
+        id: extract_branch
+        run: |
+          echo "branch_name=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+
+      - name: Load config.yaml into environment
+        run: |
+          while IFS=":" read -r key value; do
+            key=$(echo "$key" | xargs)
+            value=$(echo "$value" | xargs)
+            if [[ -n "$key" && -n "$value" ]]; then
+              echo "$key=$value" >> $GITHUB_ENV
+            fi
+          done < .github/config.yaml
+
+      # - name: Update Kubernetes deployment image
+      #   run: |
+      #     ECR_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}
+      #     sed -i "s|image:.*|image: $ECR_URI:${{ inputs.image_tag }}|" k8s/deployment.yaml
+
+      - name: Update Helm values image tag
+        run: |
+          ECR_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}
+          sed -i "s|^\(\s*image:\s*\).*|\1$ECR_URI:${{ inputs.image_tag }}|" helm/values.yaml
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add helm/values.yaml
+          git commit -m "Update image tag to ${{ inputs.image_tag }}"
+          git push origin HEAD:${{ steps.extract_branch.outputs.branch_name }}
+
+      # Optional: Apply to Kubernetes
+      # - name: Configure kubeconfig for EKS
+      #   run: |
+      #     aws eks update-kubeconfig --name $CLUSTER_NAME --region $AWS_REGION
+
+      # - name: Apply updated deployment to Kubernetes
+      #   run: |
+      #     kubectl apply -f $(find k8s -type f \( -name "*.yaml" -o -name "*.yml" \))

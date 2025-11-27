@@ -1,0 +1,103 @@
+# global:
+#   namespace: default
+#   secretStoreRef:
+#     name: "cluster-secret-store"
+#     kind: ClusterSecretStore
+
+# externalSecrets:
+#   - name: tiktoken-test-credentials
+#     # target:
+#     #   name: tiktoken-test-secret
+#     #   creationPolicy: Owner
+#     dataFrom:
+#       - extractKey: "tiktoken-config"  
+
+basic-app:
+  # appName: host-agent
+  # serviceAccount: 
+  #   create: false 
+  #   name: mcp-poc
+
+  # replicaCount: 1
+
+
+
+  image: 042889969014.dkr.ecr.us-east-1.amazonaws.com/mdoc-user-story-a2a-server:20251123101243
+
+
+  # imagePullPolicy: IfNotPresent
+
+  # service:
+  #   port: 8080
+
+  # envFrom:
+  # - secretRef:
+  #     name: aws-config-secret
+  # - secretRef:
+  #     name: gemini-config-secret
+  # - secretRef:
+  #     name: tiktoken-config-secret
+  # env:
+  #   - name: SERVER_NAME
+  #     value: "HOST_AGENT"
+  #   - name: AGENT_NAME
+  #     value: "HOST_AGENT"
+  #   - name: AGENT_NAME_CONSTANT
+  #     value: "HOST_AGENT"
+
+  # resources:
+  #   limits:
+  #     cpu: "500m"
+  #     memory: "1000Mi"
+  #   requests:
+  #     cpu: "100m"
+  #     memory: "128Mi"
+
+  # livenessProbe: {}
+  #   # httpGet:
+  #   #   path: /
+  #   #   port: http
+  #   # initialDelaySeconds: 10
+  #   # periodSeconds: 5
+
+  # readinessProbe: {}
+  #   # httpGet:
+  #   #   path: /
+  #   #   port: http
+  #   # initialDelaySeconds: 5
+  #   # periodSeconds: 3
+
+  # podSecurityContext: {}
+  # securityContext: {}
+
+  # imagePullSecrets: []
+  # nodeSelector: {}
+  # affinity: {}
+  # tolerations: []
+
+
+  # ingress:
+  #   enabled: true
+  #   hostname:
+  #     appdomain: hostagent
+  #     domain: prod.yashtechai.link
+  #   servicePort: 8080
+  #   className: nginx
+  #   annotations:
+  #     cert-manager.io/cluster-issuer: letsencrypt-prod
+  #     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  #     nginx.ingress.kubernetes.io/proxy-body-size: "500m"
+  #     nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
+  #     nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"
+  #     nginx.ingress.kubernetes.io/proxy-connect-timeout: "1800"
+  #   tls: true
+  #   paths:
+  #     - path: /
+  #       pathType: Prefix
+
+  # autoscaling:
+  #   enabled: true
+  #   minReplicas: 1
+  #   maxReplicas: 10
+  #   targetCPUUtilizationPercentage: 75
+  #   targetMemoryUtilizationPercentage: 80

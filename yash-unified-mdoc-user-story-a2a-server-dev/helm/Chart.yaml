@@ -1,0 +1,12 @@
+
+apiVersion: v2
+name: my-awesome-chart
+description: A Helm chart for Kubernetes
+version: 0.1.0
+dependencies:
+  # - name: external-secrets-chart
+  #   version: 1.0.4
+  #   repository: https://Yash-AI-Technologies.github.io/yash-unified-infra/
+  - name: basic-app
+    version: 1.1.6
+    repository: https://Yash-AI-Technologies.github.io/yash-unified-infra/
