@@ -26,6 +26,6 @@
     
     EXPOSE 5000
     
-    CMD ["python", "-m", "agents.mdoc_user_story", "--host", "0.0.0.0", "--port", "5000"]
+    CMD ["python", "-m", "agents.obligation_user_story", "--host", "0.0.0.0", "--port", "5000"]
 
     

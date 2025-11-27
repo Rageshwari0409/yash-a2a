@@ -15,8 +15,8 @@ from common.types import (
     AgentConstraints
 )
 from common.utils.push_notification_auth import PushNotificationSenderAuth
-from agents.mdoc_user_story.task_manager import AgentTaskManager
-from agents.mdoc_user_story.agent import MdocUserAgent
+from agents.obligation_user_story.task_manager import AgentTaskManager
+from agents.obligation_user_story.agent import MdocUserAgent
 
 # Configure logging
 logging.basicConfig(
@@ -51,8 +51,8 @@ def create_server_instance(host: str, port: int, base_url: str) -> A2AServer:
 
     # Construct the agent card with metadata, skills, and security schema
     agent_card = AgentCard(
-        name="M-DOC USER STORY GENERATION AGENT",
-        description="This is a Meeting Document Generator Agent that specializes in transforming meeting recordings into professional, comprehensive documents with transcripts, screenshots, and structured summaries",
+        name="OBLIGATION ALERTS AGENT",
+        description="This is an Obligation Alerts Agent that specializes in analyzing contracts, extracting obligations, and generating comprehensive analysis reports from uploaded documents.",
         url=f"http://{os.getenv('HOST')}:{port}/",
         version="1.0.0",
         defaultInputModes=MdocUserAgent.SUPPORTED_CONTENT_TYPES,
@@ -61,37 +61,35 @@ def create_server_instance(host: str, port: int, base_url: str) -> A2AServer:
         agent_constraints=AgentConstraints(
                 max_file_size="10MB",
                 supported_file_types=[
-                    "video/mp4",
-                    "video/mov",
-                    "video/avi",
-                    "video/mkv"
+                    "application/pdf",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "text/plain"
                 ],
                 max_files=1,
                 prompt_template=[
-                    "Process my meeting recording for client {{client_name}} and generate a document titled {{doc_title}}",
-                    "Upload and document the meeting for {{client_name}}",
-                    "Generate a {{doc_format}} meeting summary for the recording "
+                    "Analyze my contract and extract all obligations",
+                    "Upload contract from {{s3_url}} and answer: {{query}}",
+                    "What are the key obligations in this contract?"
                 ],
-                prompt_template_variable_name=["client_name", "doc_title", "doc_format"]
+                prompt_template_variable_name=["s3_url", "query"]
             ),
         skills=[
             AgentSkill(
-                id="end-to-end-meeting-documentation",
-                name="End-to-End Meeting Documentation",
+                id="contract-obligation-extraction",
+                name="Contract Obligation Extraction",
                 description=(
-                    "Complete workflow automation that processes meeting recordings and generates professional "
-                    "documents in a single operation. Combines video upload, transcript extraction, screenshot "
-                    "capture, and document generation into one seamless process."
+                    "Analyzes contract documents to extract key obligations, dates, parties, and terms. "
+                    "Generates comprehensive PDF reports and enables semantic search on contract content."
                 ),
-                tags=["Workflow Automation", "Meeting Documentation", "Full Pipeline", "One-Click Processing", "MCP"],
+                tags=["Contract Analysis", "Obligation Extraction", "Document Processing", "Semantic Search", "MCP"],
                 examples=[
-                    "Process and document my meeting for Acme Corp titled 'Product Launch Discussion'",
-                    "Complete documentation workflow for the video provided, client name TechStart, title 'Q1 Business Review'",
-                    "Upload, process, and generate PDF for Global Solutions - 'Employee Onboarding Session'",
+                    "Analyze this contract and extract all obligations",
+                    "What are the key deadlines and obligations in this agreement?",
+                    "Upload the contract and generate an analysis report",
                 ],
             )
         ],
-        customAgentMetaData="MDOC_USER_STORY_AGENT",
+        customAgentMetaData="OBLIGATION_ALERTS_AGENT",
         agentType="SYNCHRONOUS_AGENT"
     )
     

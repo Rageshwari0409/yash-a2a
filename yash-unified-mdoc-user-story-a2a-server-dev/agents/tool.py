@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Coder tool
-coder_configs = {
-    "coder": {
+obligation_configs = {
+    "obligation": {
         "command": "python",
         "args" : [
             "tools-data/user_story/mcp_server.py",
@@ -20,4 +20,4 @@ coder_configs = {
         "transport": "stdio",
     }
 }
-mdoc_tools_client = MultiServerMCPClient(coder_configs)
+mdoc_tools_client = MultiServerMCPClient(obligation_configs)
