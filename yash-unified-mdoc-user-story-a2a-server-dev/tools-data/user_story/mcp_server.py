@@ -68,6 +68,7 @@ class UploadResponse(BaseModel):
 class ChatRequest(BaseModel):
     """Request model for chatting with uploaded contracts."""
     message: str = Field(..., description="Question about the contracts")
+    document_id: Optional[str] = Field(None, description="Document ID (e.g., doc-2025-123) to search within specific document")
     auth_file_path: Optional[str] = Field(None, description="Path to file containing auth token")
 
 
@@ -177,6 +178,7 @@ async def chat(request: ChatRequest) -> str:
     Args:
         request: A ChatRequest object containing:
                  - message: Question about the contracts
+                 - document_id: Optional document ID to search within specific document
                  - auth_file_path: Optional path to authentication file
 
     Returns:
@@ -198,6 +200,9 @@ async def chat(request: ChatRequest) -> str:
             "message": request.message,
             "user_metadata": json.dumps(user_metadata) if user_metadata else "{}",
         }
+
+        if request.document_id:
+            data["document_id"] = request.document_id
 
         logging.info(f"Attempting to chat. Request URL: {url}, Data: {data}")
 

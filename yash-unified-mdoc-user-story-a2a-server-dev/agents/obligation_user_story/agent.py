@@ -68,6 +68,7 @@ class MdocUserAgent:
 
     **Parameters:**
     - `message` (required): Question about contracts
+    - `document_id` (optional): Document ID (e.g., doc-2025-123) to search within specific document
     - `auth_file_path` (optional): Path to authentication file
 
     **Returns:**
@@ -79,11 +80,14 @@ class MdocUserAgent:
     1. **Upload Contract**: Use `upload` with the S3 URL of the contract document
     2. **Processing**: System extracts text, creates semantic chunks, stores in vector database
     3. **Report Generation**: PDF analysis report is generated and uploaded to S3
-    4. **Query**: Use `chat` for follow-up questions about the contract
+    4. **Save Document ID**: Note the `file_id` (e.g., doc-2025-123) from upload response
+    5. **Query**: Use `chat` with `document_id` for follow-up questions about specific contract
 
     ### Best Practices:
     - Always validate that users provide valid S3 presigned URLs
-    - Save the `file_id` from upload responses for future reference
+    - Save the `file_id` (document ID) from upload responses - users can use it later for targeted queries
+    - When user asks about a specific document, use `document_id` in chat to search only within that document
+    - If no `document_id` provided, chat searches across all uploaded documents
     - Handle errors gracefully and explain what went wrong
 
     ## Important Notes

@@ -69,7 +69,8 @@ def create_server_instance(host: str, port: int, base_url: str) -> A2AServer:
                 prompt_template=[
                     "Analyze my contract and extract all obligations",
                     "Upload contract from {{s3_url}} and answer: {{query}}",
-                    "What are the key obligations in this contract?"
+                    "What are the key obligations in this contract?",
+                    "Ask about document {{document_id}}: {{query}}"
                 ],
                 prompt_template_variable_name=["s3_url", "query"]
             ),
