@@ -72,7 +72,7 @@ def create_server_instance(host: str, port: int, base_url: str) -> A2AServer:
                     "What are the key obligations in this contract?",
                     "Ask about document {{document_id}}: {{query}}"
                 ],
-                prompt_template_variable_name=["s3_url", "query"]
+                prompt_template_variable_name=["s3_url", "query", "document_id"]
             ),
         skills=[
             AgentSkill(
@@ -80,13 +80,16 @@ def create_server_instance(host: str, port: int, base_url: str) -> A2AServer:
                 name="Contract Obligation Extraction",
                 description=(
                     "Analyzes contract documents to extract key obligations, dates, parties, and terms. "
+                    "Automatically extracts structured obligations (payment schedules, renewal dates, deadlines, compliance milestones) in background during upload. "
                     "Generates comprehensive PDF reports and enables semantic search on contract content."
                 ),
-                tags=["Contract Analysis", "Obligation Extraction", "Document Processing", "Semantic Search", "MCP"],
+                tags=["Contract Analysis", "Obligation Extraction", "Document Processing", "Semantic Search", "MCP", "Background Processing"],
                 examples=[
                     "Analyze this contract and extract all obligations",
                     "What are the key deadlines and obligations in this agreement?",
                     "Upload the contract and generate an analysis report",
+                    "What payment schedules are in this contract?",
+                    "List all renewal dates and termination notices",
                 ],
             )
         ],

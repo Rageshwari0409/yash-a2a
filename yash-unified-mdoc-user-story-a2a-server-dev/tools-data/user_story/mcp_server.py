@@ -55,13 +55,27 @@ class UploadRequest(BaseModel):
     auth_file_path: Optional[str] = Field(None, description="Path to file containing auth token")
 
 
+class Obligation(BaseModel):
+    """Model for extracted obligation."""
+    id: Optional[str] = Field(None, description="Unique obligation identifier")
+    contract_id: Optional[str] = Field(None, description="Associated contract ID")
+    type: Optional[str] = Field(None, description="Obligation type (payment_schedule, renewal_date, etc.)")
+    description: Optional[str] = Field(None, description="Description of the obligation")
+    due_date: Optional[str] = Field(None, description="Due date in YYYY-MM-DD format or relative date")
+    party_responsible: Optional[str] = Field(None, description="Party responsible for the obligation")
+    recurrence: Optional[str] = Field(None, description="Recurrence pattern (one-time, monthly, annually, etc.)")
+    priority: Optional[str] = Field(None, description="Priority level (high, medium, low)")
+    status: Optional[str] = Field(None, description="Current status (pending, completed, etc.)")
+
+
 class UploadResponse(BaseModel):
     """Response model for contract upload results."""
     success: bool = Field(..., description="Whether the operation was successful")
     message: str = Field(..., description="Answer to query or processing confirmation")
-    file_id: Optional[str] = Field(None, description="Unique contract identifier")
+    file_id: Optional[str] = Field(None, description="Unique contract identifier (e.g., doc-2025-123)")
     filename: Optional[str] = Field(None, description="Original filename")
     pdf_url: Optional[str] = Field(None, description="S3 presigned URL to download generated report")
+    obligations: Optional[list] = Field(None, description="List of extracted obligations with dates, types, and descriptions (extracted in background)")
     error: Optional[str] = Field(None, description="Error message, if the operation failed")
 
 
@@ -87,6 +101,15 @@ async def upload(request: UploadRequest) -> str:
     This tool sends a contract document S3 URL to the Obligation Alerts API for processing.
     It extracts text, creates semantic chunks, stores in vector database, and generates PDF report.
 
+    **Obligation Extraction (Background):**
+    During upload, the system automatically extracts structured obligations including:
+    - Payment schedules and deadlines
+    - Renewal dates and termination notices
+    - Compliance milestones and audit requirements
+    - Service delivery deadlines and performance reviews
+
+    Extracted obligations are stored in Milvus and returned in the response.
+
     Args:
         request: An UploadRequest object containing:
                  - s3_url: S3 presigned URL pointing to contract file (PDF, DOCX, TXT)
@@ -95,7 +118,7 @@ async def upload(request: UploadRequest) -> str:
 
     Returns:
         A JSON string representing an UploadResponse object with success status,
-        message (answer or confirmation), file_id, filename, and pdf_url.
+        message (answer or confirmation), file_id, filename, pdf_url, and obligations list.
     """
     try:
         url = f"{API_BASE_URL}/api/v1/upload"
@@ -129,7 +152,8 @@ async def upload(request: UploadRequest) -> str:
             message=response_data.get("message"),
             file_id=response_data.get("file_id"),
             filename=response_data.get("filename"),
-            pdf_url=response_data.get("pdf_url")
+            pdf_url=response_data.get("pdf_url"),
+            obligations=response_data.get("obligations", [])
         ).model_dump_json()
 
     except requests.exceptions.HTTPError as e:

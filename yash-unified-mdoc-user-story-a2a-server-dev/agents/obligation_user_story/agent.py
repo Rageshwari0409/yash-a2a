@@ -52,6 +52,13 @@ class MdocUserAgent:
     ### 1. upload
     Uploads and processes contract documents to extract obligations and generate reports.
 
+    **Automatic Obligation Extraction (Background):**
+    During upload, the system automatically extracts structured obligations including:
+    - Payment schedules and deadlines
+    - Renewal dates and termination notices
+    - Compliance milestones and audit requirements
+    - Service delivery deadlines and performance reviews
+
     **Parameters:**
     - `s3_url` (required): S3 presigned URL pointing to the contract file (PDF, DOCX, TXT)
     - `query` (optional): Specific question about the contract
@@ -59,9 +66,10 @@ class MdocUserAgent:
 
     **Returns:**
     - `message`: Answer to query or processing confirmation
-    - `file_id`: Unique contract identifier
+    - `file_id`: Unique contract identifier (e.g., doc-2025-123)
     - `filename`: Original filename
     - `pdf_url`: S3 presigned URL to download generated report
+    - `obligations`: List of extracted obligations with type, description, due_date, party_responsible, recurrence, priority
 
     ### 2. chat
     Answers questions about uploaded contracts using semantic search.
@@ -79,13 +87,16 @@ class MdocUserAgent:
     ### Standard Contract Processing Workflow:
     1. **Upload Contract**: Use `upload` with the S3 URL of the contract document
     2. **Processing**: System extracts text, creates semantic chunks, stores in vector database
-    3. **Report Generation**: PDF analysis report is generated and uploaded to S3
-    4. **Save Document ID**: Note the `file_id` (e.g., doc-2025-123) from upload response
-    5. **Query**: Use `chat` with `document_id` for follow-up questions about specific contract
+    3. **Obligation Extraction**: System automatically extracts obligations (dates, deadlines, payments, renewals) in background
+    4. **Report Generation**: PDF analysis report is generated and uploaded to S3
+    5. **Save Document ID**: Note the `file_id` (e.g., doc-2025-123) from upload response
+    6. **Review Obligations**: Check the `obligations` list in upload response for extracted obligations
+    7. **Query**: Use `chat` with `document_id` for follow-up questions about specific contract
 
     ### Best Practices:
     - Always validate that users provide valid S3 presigned URLs
     - Save the `file_id` (document ID) from upload responses - users can use it later for targeted queries
+    - Review the `obligations` list returned from upload to see all extracted obligations with dates
     - When user asks about a specific document, use `document_id` in chat to search only within that document
     - If no `document_id` provided, chat searches across all uploaded documents
     - Handle errors gracefully and explain what went wrong
