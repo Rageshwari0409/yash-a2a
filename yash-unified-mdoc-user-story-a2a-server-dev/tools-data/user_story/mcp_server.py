@@ -109,6 +109,7 @@ async def upload(request: UploadRequest) -> str:
         # Prepare form data
         data = {
             "s3_url": request.s3_url,
+            "user_metadata": json.dumps(user_metadata) if user_metadata else "{}",
         }
 
         if request.query:
@@ -184,7 +185,7 @@ async def chat(request: ChatRequest) -> str:
     """
     try:
         url = f"{API_BASE_URL}/api/v1/chat"
-        headers = {"Content-Type": "application/json"}
+        headers = {}
 
         logging.info(f"Auth path: {request.auth_file_path}")
 
@@ -192,14 +193,15 @@ async def chat(request: ChatRequest) -> str:
         auth_headers, user_metadata = get_auth_headers_and_metadata(request.auth_file_path)
         headers.update(auth_headers)
 
-        # Prepare JSON data
+        # Prepare form data
         data = {
             "message": request.message,
+            "user_metadata": json.dumps(user_metadata) if user_metadata else "{}",
         }
 
         logging.info(f"Attempting to chat. Request URL: {url}, Data: {data}")
 
-        response = requests.post(url, json=data, headers=headers, timeout=300)
+        response = requests.post(url, data=data, headers=headers, timeout=300)
         response.raise_for_status()
 
         response_data = response.json()
